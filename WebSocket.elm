@@ -17,3 +17,6 @@ send : String -> WebSocket -> Task x ()
 send =
   Native.WebSocket.send
 
+connected : Signal.Address Bool -> WebSocket -> Task x ()
+connected =
+  Native.WebSocket.connected

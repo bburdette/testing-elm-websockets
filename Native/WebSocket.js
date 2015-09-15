@@ -11,11 +11,17 @@ Elm.Native.WebSocket.make = function(localRuntime) {
   var Utils = Elm.Native.Utils.make(localRuntime);
 
   function create(url) {
+    var socket = window.socket;
     return Task.asyncFunction(function(callback) {
-      var socket = new WebSocket(url);
-      socket.onopen = function() {
+      if (typeof socket === 'undefined') {
+        socket = new WebSocket(url);
+        socket.onopen = function() {
+          callback(Task.succeed(socket));
+        }
+        window.socket = socket;
+      } else {
         callback(Task.succeed(socket));
-      };
+      }
     });
   }
 
@@ -30,19 +36,37 @@ Elm.Native.WebSocket.make = function(localRuntime) {
 
   function send(message, socket) {
     return Task.asyncFunction(function(callback) {
-      if (socket.readyState == WebSocket.OPEN) {
+      if (socket.readyState === WebSocket.OPEN) {
         socket.send(message);
-        Task.succeed(Utils.Tuple0);
+        callback(Task.succeed(Utils.Tuple0));
       } else {
-        Task.fail(Utils.Tuple0);
+        callback(Task.fail(Utils.Tuple0));
       }
+    });
+  }
+
+  function connected(address, socket) {
+    return Task.asyncFunction(function(callback) {
+      if (socket.readyState === WebSocket.OPEN) {
+        Task.perform(address._0(true));
+      } else {
+        Task.perform(address._0(false));
+      }
+      socket.onopen = function() {
+        Task.perform(address._0(true));
+      };
+      socket.onclose = function() {
+        Task.perform(address._0(false));
+      };
+      callback(Task.succeed(Utils.Tuple0));
     });
   }
 
   localRuntime.Native.WebSocket.values = {
     create: create,
     listen: F2(listen),
-    send: F2(send)
+    send: F2(send),
+    connected: F2(connected)
   };
 
   return localRuntime.Native.WebSocket.values;
