@@ -20,14 +20,14 @@ main = Signal.map3 (\a b c -> show ("Sending: " ++ a ++ ", Receiving: " ++ b ++ 
 listen : Signal.Mailbox String
 listen = Signal.mailbox ""
 
-port listening : Task x ()
-port listening = socket `Task.andThen` WebSocket.listen listen.address
+port listening : Task x (List ())
+port listening = socket `Task.andThen`
+  (\s ->
+    Task.sequence [WebSocket.listen listen.address s,
+                   WebSocket.connected connected.address s])
 
 connected : Signal.Mailbox Bool
 connected = Signal.mailbox False
-
-port connection : Task x ()
-port connection = socket `Task.andThen` WebSocket.connected connected.address
 
 send : String -> Task x ()
 send message = socket `Task.andThen` WebSocket.send message
