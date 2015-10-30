@@ -5,6 +5,10 @@ import Native.WebSocket
 
 type WebSocket = WebSocket
 
+createToHost : String -> Task x WebSocket
+createToHost =
+  Native.WebSocket.createToHost
+
 create : String -> Task x WebSocket
 create =
   Native.WebSocket.create

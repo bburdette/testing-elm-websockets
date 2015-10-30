@@ -10,6 +10,23 @@ Elm.Native.WebSocket.make = function(localRuntime) {
   var Task = Elm.Native.Task.make(localRuntime);
   var Utils = Elm.Native.Utils.make(localRuntime);
 
+  function createToHost(port) {
+    var socket = window.socket;
+    var url = "ws://".concat(window.location.hostname).concat(":");
+    url = url.concat(port);
+    return Task.asyncFunction(function(callback) {
+      if (typeof socket === 'undefined') {
+        socket = new WebSocket(url);
+        socket.onopen = function() {
+          callback(Task.succeed(socket));
+        }
+        window.socket = socket;
+      } else {
+        callback(Task.succeed(socket));
+      }
+    });
+  }
+
   function create(url) {
     var socket = window.socket;
     return Task.asyncFunction(function(callback) {
@@ -63,6 +80,7 @@ Elm.Native.WebSocket.make = function(localRuntime) {
   }
 
   localRuntime.Native.WebSocket.values = {
+    createToHost: createToHost,
     create: create,
     listen: F2(listen),
     send: F2(send),
